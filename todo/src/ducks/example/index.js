@@ -1,64 +1,107 @@
 // 1. imports
-import { useSelector, useDispatch } from 'react-redux'
-import axios from 'axios'
+import { useSelector, useDispatch } from "react-redux";
+import axios from "axios";
 
 // 2. action definitions
-const EXAMPLE_SYNC = 'example/EXAMPLE_SYNC'
-const EXAMPLE_ASYNC = 'example/EXAMPLE_ASYNC'
-
+const ADD_TODO = "example/ADD_TODO";
+const DELETE_TODO = "example/DELETE_TODO";
+const COMPLETE_TODO = "example/COMPLETE_TODO";
 // 3. initial state
 const initialState = {
   example: null,
   list: [],
+};
+
+function generateId() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 // 4. reducer
+
 export default (state = initialState, action) => {
   switch (action.type) {
-    case EXAMPLE_ASYNC:
+    case ADD_TODO:
       return {
         ...state,
-        list: action.payload,
-      }
-    case EXAMPLE_SYNC:
+        list: [
+          ...state.list,
+          { id: generateId(), text: action.payload, completed: false },
+        ], // action.payload
+      };
+    case DELETE_TODO:
       return {
         ...state,
-        example: action.payload,
-      }
+        list: state.list.filter((item) => item.id !== action.payload),
+      };
+    case COMPLETE_TODO:
+      return {
+        ...state,
+        list: state.list.map((item) => {
+          if (item.id === action.payload) {
+            item.completed = !item.completed;
+          }
+          return item;
+        }),
+      };
+
+    
     default:
-      return state
+      return state;
   }
-}
+};
 
 // 5. action creators
-// async action...
-function doExample(text) {
+// todo action...
+function addTheTodo(text) {
   return {
-    type: EXAMPLE_SYNC,
+    type: ADD_TODO,
     payload: text,
-  }
+  };
 }
 
-// 5. async action...
-function doExampleAsync() {
-  return (dispatch) => {
-    setTimeout(() => {
-      dispatch({ type: EXAMPLE_ASYNC, payload: ['foo', 'bar', 'baz'] })
-    }, 5000)
+function deleteTheTodo(id) {
+  return {
+    type: DELETE_TODO,
+    payload: id,
+  };
+}
+
+function completeTheTodo(id) {
+  let completed = ADD_TODO.completed;
+  if (completed === false) {
+    return {
+      completed: true,
+      type: COMPLETE_TODO,
+      payload: id,
+    };
+  } else {
+    return {
+      completed: false,
+      type: COMPLETE_TODO,
+      payload: id,
+    };
   }
 }
 
 // 6. custom hook
 export function useExample() {
-  const dispatch = useDispatch()
-  const example = useSelector((app) => app.exampleState.example)
-  const list = useSelector((app) => app.exampleState.list)
-  const setExample = (text) => dispatch(doExample(text))
-  const exampleAsync = () => dispatch(doExampleAsync())
+  const dispatch = useDispatch();
+  const example = useSelector((app) => app.exampleState.example);
+  const list = useSelector((app) => app.exampleState.list);
+  const addTodo = (text) => dispatch(addTheTodo(text));
+  const deleteTodo = (id) => dispatch(deleteTheTodo(id));
+  const completeTodo = (id) => dispatch(completeTheTodo(id));
   return {
     example,
-    setExample,
-    exampleAsync,
+    addTodo,
+    deleteTodo,
     list,
-  }
+    completeTodo,
+  };
 }
+
+
